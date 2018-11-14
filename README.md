@@ -177,7 +177,7 @@ Parameters:
 Parameter   | Type      | Default | Required | Description
 ---------   | --------- | ------- | -------- | -----------
 vCDHost     | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
-ThemeName   | String    | None    | Yes      | The theme to be removed. If the theme doesn't exist an error will be generated and no changes made.
+ThemeName   | String    | None    | Yes      | The theme to which the CSS content should be uploaded.
 CssFile     | String    | None    | Yes      | The path and filename of a .css file to be uplaoded as the CSS content for the specified theme, generally this will be the .css outputted by the VMware theme-builder.
 
 Output:
@@ -200,7 +200,7 @@ Parameters:
 Parameter   | Type      | Default | Required | Description
 ---------   | --------- | ------- | -------- | -----------
 vCDHost     | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
-ThemeName   | String    | None    | Yes      | The theme to be removed. If the theme doesn't exist an error will be generated and no changes made.
+ThemeName   | String    | None    | Yes      | The theme from which the CSS content should be retrieved.
 CssFile     | String    | None    | Yes      | The path and filename of a file to be written with the downloaded css information, an existing file with the same name will be overwritten.
 
 Output:
