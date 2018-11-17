@@ -245,7 +245,7 @@ Parameters:
 Parameter   | Type      | Default | Required | Description
 ---------   | --------- | ------- | -------- | -----------
 vCDHost     | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
-LogoFile    | String    | None    | Yes      | The path and filename of a .png file to be uplaoded as the portal logo.
+LogoFile    | String    | None    | Yes      | The path and filename of a .png file to be uploaded as the portal logo.
 
 Output:
 
