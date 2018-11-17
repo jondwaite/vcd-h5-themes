@@ -46,6 +46,7 @@ Function Get-SessionId(
     }
 }
 
+
 # Get-APIVersion is a helper function that retrieves the highest supported
 # API version from the given vCD host. This ensures that commands are not
 # run against unsupported versions of the vCloud Director API.
@@ -56,14 +57,20 @@ Function Get-APIVersion(
     # If vCDHost not specified, obtain from connected sessions
     $vCDHost = Get-vCDHost -vCDHost $vCDHost
 
-    try {
-        [xml]$apiversions = Invoke-WebRequest -Uri "https://$vCDHost/api/versions" -Method Get -Headers @{"Accept"='application/*+xml'}
-    } catch {
-        Write-Error ("Could not retrieve API versions, Status Code is $($_.Exception.Response.StatusCode.Value__).")
-        return   
+    if ($vCDHost) {
+        try {
+            [xml]$apiversions = Invoke-WebRequest -Uri "https://$vCDHost/api/versions" -Method Get -Headers @{"Accept"='application/*+xml'}
+        } catch {
+            Write-Error ("Could not retrieve API versions, Status Code is $($_.Exception.Response.StatusCode.Value__).")
+            Write-Error ("This can be caused by an untrusted SSL certificate on your vCDHost.")
+            return   
+        }
+        return [int](($apiversions.SupportedVersions.VersionInfo | Where-Object { $_.deprecated -eq $false } | Sort-Object Version -Descending | Select-Object -First 1).Version)
+    } else {
+        Write-Error ("Could not establish vCDHost, if you are connected to multiple servers you must specify -vCDHost option.")
     }
-    return [int](($apiversions.SupportedVersions.VersionInfo | Where-Object { $_.deprecated -eq $false } | Sort-Object Version -Descending | Select-Object -First 1).Version)
 }
+
 
 # Get-vCDHost is a helper function to identify the correct vCDHost value to
 # be used (specified directly, default if only 1 connection to vCD or empty
@@ -122,6 +129,7 @@ work with any prior releases.
     }
     return ($r1.Content | ConvertFrom-Json)
 }
+
 
 Function Set-Branding(
     [string]$vcdHost,                              # The vCD host to connect to
@@ -601,19 +609,11 @@ work with any prior releases.
     $mySessionID = Get-SessionId($vCDHost)
     if (!$mySessionID) { return }
 
-    # if (!(Test-Path -Path $CssFile)){
-    #     Write-Error ("Error, could not locate css theme file: $CssFile.")
-    #     Return
-    # }
-
     if (!(Get-Theme -vcdHost $vCDHost -ThemeName $ThemeName)) {
         Write-Warning "Cannot download .CSS for Theme $ThemeName as this theme does not exist."
         return
     }
 
-    # $CssFileName = $CssFile | Split-Path -Leaf
-
-    # Request 1 - register the filename to retrieve the upload link for the .CSS content:
     $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = 'text/css;version=31.0' }
     $uri = "https://$vCDHost/cloudapi/branding/themes/$ThemeName/css"
     
@@ -632,8 +632,117 @@ work with any prior releases.
     }
 
     Write-Host("Theme CSS file downloaded succesfully.")
-
 }
+
+
+Function Publish-Logo(
+    [string]$vCDHost,  # The vCD host to connect to, required if more than one vCD endpoint is connected.
+    [Parameter(Mandatory=$true)][string]$LogoFile   # The filename for the logo to be uploaded
+)
+{
+<#
+.SYNOPSIS
+Uploads a graphic file (PNG format) to be used as the site logo.
+.DESCRIPTION
+Publish-Logo provides an easy method to change the global site logo for a
+vCloud Director site. This logo will appear in the title bar and on the
+default login screen for the site.
+.PARAMETER vCDHost
+Which vCloud Director API host to connect to (e.g. my.cloud.com). You must be
+connected to this host as a user in the system (Administrative) context using
+Connect-CIServer prior to running this command. This parameter is required
+if you are connected to multiple vCD environments.
+.PARAMETER LogoFile
+A mandatory parameter of the png file containing the logo to be uploaded.
+.OUTPUTS
+A message indicating whether the logo has been successfully uploaded.
+.EXAMPLE
+Publish-Logo -vCDHost my.cloud.com -LogoFile mylogo.png
+.NOTES
+Requires functionality first introduced in vCloud Director v9.1 and will *NOT*
+work with any prior releases.
+#>
+    $vCDHost = Get-vCDHost -vCDHost $vCDHost
+    
+    $apiVersion = Get-APIVersion -vCDHost $vCDHost
+    if ($apiVersion -lt 30) {
+        Write-Error("Publish-Logo requires vCloud API v30 or later (vCloud Director 9.1), the detected API version is $apiVersion.")
+        return
+    }
+
+    $mySessionID = Get-SessionId($vCDHost)
+    if (!$mySessionID) { return }
+
+    if (!(Test-Path -Path $LogoFile)){
+         Write-Error ("Error, could not locate css theme file: $CssFile.")
+         Return
+    }
+
+    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = 'application/json;version=30.0' }
+    $uri = 'https://' + $vCDHost + '/cloudapi/branding/logo'
+    
+    try {
+        Invoke-WebRequest -Uri $uri -Headers $headers -Method Put -InFile $LogoFile -ContentType 'image/png' | Out-Null
+    } catch {
+        Write-Error ("Error occurred obtaining uploading logo file, Status Code is $($_.Exception.Response.StatusCode.Value__).")
+        return
+    }
+
+    Write-Host("System logo file uploaded succesfully.")
+}
+
+
+Function Get-Logo(
+    [string]$vCDHost,   # The vCD host to connect to
+    [Parameter(Mandatory=$true)][string]$LogoFile    # The Logo file to be downloaded
+)
+{
+<#
+.SYNOPSIS
+Retrieves the site logo for vCloud Director 9.1 or later.
+.DESCRIPTION
+Get-Logo provides an easy way to download the PNG system logo file 
+for a vCloud Director 9.1 (or later) environment.
+.PARAMETER vCDHost
+Which vCloud Director API host to connect to (e.g. my.cloud.com). You must be
+connected to this host as a user in the system (Administrative) context using
+Connect-CIServer prior to running this command. This parameter is required
+if you are connected to multiple vCD environments.
+.PARAMETER LogoFile
+The file to which the logo will be saved as. Any existing file with the same
+name will be overwritten.
+.OUTPUTS
+A message will confirm whether the logo file has been sucessfully downloaded or
+a failure alert will be generated.
+.EXAMPLE
+Get-Logo -vCDHost my.cloud.com -LogoFile mylogo.png
+.NOTES
+Requires functionality first introduced in vCloud Director v9.1 and will *NOT*
+work with any prior releases.
+#>
+    $vCDHost = Get-vCDHost -vCDHost $vCDHost    
+
+    $apiVersion = Get-APIVersion -vCDHost $vCDHost
+    if ($apiVersion -lt 30) {
+        Write-Error("Get-Logo requires vCloud API v30 or later (vCloud Director 9.1), the detected API version is $apiVersion.")
+        return
+    }
+
+    $mySessionID = Get-SessionId($vCDHost)
+    if (!$mySessionID) { return }
+
+    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = 'image/png;version=30.0' }
+    $uri = "https://$vCDHost/cloudapi/branding/logo"
+    
+    try {
+        Invoke-WebRequest -Method Get -Uri $URI -Headers $headers -OutFile $LogoFile
+    } catch {
+        Write-Error ("Error occurred retrieving CSS, Status Code is $($_.Exception.Response.StatusCode.Value__).")
+        return
+    }
+    Write-Host("Logo PNG file downloaded succesfully.")
+}
+
 
 # Make module functions accessible publically:
 Export-ModuleMember -Function Get-Branding
@@ -644,3 +753,5 @@ Export-ModuleMember -Function Remove-Theme
 Export-ModuleMember -Function New-Theme
 Export-ModuleMember -Function Publish-Css
 Export-ModuleMember -Function Get-Css
+Export-ModuleMember -Function Publish-Logo
+Export-ModuleMember -Function Get-Logo

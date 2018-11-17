@@ -16,8 +16,30 @@ cmdlet Name  | Function                                                  | Minim
 [`New-Theme`](#New-Theme) | Creates a new portal theme                                | 30.0 (vCloud Director v9.1)
 [`Publish-Css`](#Publish-Css) | Uploads a generated CSS file for a vCloud Director theme  | 31.0 (vCloud Director v9.5)
 [`Get-Css`](#Get-Css) | Downloads a CSS file from a vCloud Director theme         | 31.0 (vCloud Director v9.5)
+[`Publish-Logo`](#Publish-Logo) | Uploads a PNG file to be used as the portal logo | 30.0 (vCloud Director v9.1)
+[`Get-Logo`](#Get-Logo) | Downloads the PNG file being used as the portal logo | 30.0 (vCloud Director v9.1)
 
 The sections below provide documentation of each cmdlet and the parameters it takes together with example usage information.
+
+## Installation
+
+This module has been uploaded to PowerShell Gallery and can be installed for the current user by:
+
+```PowerShell
+Install-Module vcd-h5-themes -Scope CurrentUser
+```
+
+or globally using:
+
+```PowerShell
+Install-Module vcd-h5-themes
+```
+
+It can also be downloaded and added to the current PowerShell session by:
+
+```PowerShell
+Import-Module .\vcd-h5-themes.psd1
+```
 
 ## Get-Branding
 
@@ -212,4 +234,48 @@ Example:
 ```PowerShell
 C:\PS> Get-Css -vCDHost 'my.cloud.com' -ThemeName 'MyTheme' -CssFile 'mytheme.css'
 Theme CSS file downloaded succesfully.
+```
+
+## Publish-Logo
+
+This function uploads the specified PNG file as the portal logo.
+
+Parameters:
+
+Parameter   | Type      | Default | Required | Description
+---------   | --------- | ------- | -------- | -----------
+vCDHost     | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
+LogoFile    | String    | None    | Yes      | The path and filename of a .png file to be uplaoded as the portal logo.
+
+Output:
+
+A message indicating whether the .png file has been successfully uploaded or not.
+
+Example:
+
+```PowerShell
+C:\PS> Publish-Logo -vCDHost 'my.cloud.com' -LogoFile 'mylogo.png'
+System logo file uploaded succesfully.
+```
+
+## Get-Logo
+
+This function downloads a PNG file of the current portal branding logo.
+
+Parameters:
+
+Parameter   | Type      | Default | Required | Description
+---------   | --------- | ------- | -------- | -----------
+vCDHost     | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
+LogoFile    | String    | None    | Yes      | The path and filename of a file to be written with the downloaded Logo file, an existing file with the same name will be overwritten.
+
+Output:
+
+A message indicating whether or not the specified PNG file was downloaded.
+
+Example:
+
+```PowerShell
+C:\PS> Get-Logo -vCDHost 'my.cloud.com'  -LogoFile 'mylogo.png'
+Logo PNG file downloaded succesfully.
 ```
