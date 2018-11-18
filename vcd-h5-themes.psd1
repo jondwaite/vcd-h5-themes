@@ -12,7 +12,7 @@
 RootModule = 'vcd-h5-themes.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.1.0'
+ModuleVersion = '1.2.1'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -69,7 +69,7 @@ Description = 'vcd-h5-themes provides cmdlets to assist vCloud Service Providers
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @( 'Get-Branding','Set-Branding','Get-Theme','Set-Theme','Remove-Theme','New-Theme','Publish-Css','Get-Css' )
+FunctionsToExport = @( 'Get-Branding','Set-Branding','Get-Theme','Set-Theme','Remove-Theme','New-Theme','Publish-Css','Get-Css', "Publish-Logo", "Get-Logo" )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = '*'
