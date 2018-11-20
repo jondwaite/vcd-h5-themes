@@ -76,6 +76,7 @@ Parameter   | Type      | Default | Required | Description
 vCDHost     | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
 portalName  | String    | None    | No       | A new name for the site portal, if omitted the previous portal name is retained.
 portalColor | String    | None    | No       | A new color for the site portal banner, if omitted the previous color value is retained. Must be specified in HTML hexadecimal 16-bit color values using upper-case characters (e.g. '#1A2B3C').
+RemovePortalColor | Boolean | False | No     | If set to True, any previously configured portal color will be removed.
 customLinks | Hashtable | None    | No       | A hash of custom URL keys and values to be created or updated. Note that currently this serves no purpose as the customLinks functionality is not enabled in vCloud Director v9.x. Example: `@{'about'='https://my.company.com/about';'support'='https://my.company.com/support'}`
 
 Output:
