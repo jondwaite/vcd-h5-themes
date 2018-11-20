@@ -134,7 +134,10 @@ work with any prior releases.
 Function Set-Branding(
     [string]$vcdHost,                              # The vCD host to connect to
     [string]$portalName,                           # Portal title string
+    [Parameter(ParameterSetName="portalColor")]
     [string]$portalColor,                          # Portal color (hex format '#ABCD12')
+    [Parameter(ParameterSetName="RemovePortalColor")]
+    [Switch]$RemovePortalColor,                    # Revert Portal color to none
     [hashtable]$customLinks                        # Custom links to be added to portal
 )
 {
@@ -200,7 +203,10 @@ not specified in the Set-Branding options.
 
     if ($portalColor) {
         $branding.Add('portalColor',$portalColor)
-    } else {
+    } elseif ($RemovePortalColor) {
+        $branding.Add('portalColor','')    
+    } 
+    else {
         $branding.Add('portalColor',$oldbranding.portalColor)
     }
     
