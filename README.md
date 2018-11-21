@@ -49,7 +49,7 @@ Parameters:
 
 Parameter  | Type   | Default | Required | Description
 ---------  | ------ | ------- | -------- | -----------
-vCDHost    | String | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
+Server     | String | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
 
 Output:
 
@@ -58,7 +58,7 @@ A PSObject containing the configured branding settings for the Portal Name, Colo
 Example:
 
 ```PowerShell
-C:\PS> Get-Branding -vcdHost 'my.cloud.com'
+C:\PS> Get-Branding -Server 'my.cloud.com'
 
 portalName               portalColor selectedTheme                      customLinks
 ----------               ----------- -------------                      -----------
@@ -71,13 +71,13 @@ This function updates the current branding settings for a vCloud Director instan
 
 Parameters:
 
-Parameter   | Type      | Default | Required | Description
----------   | --------- | ------- | -------- | -----------
-vCDHost     | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
-portalName  | String    | None    | No       | A new name for the site portal, if omitted the previous portal name is retained.
-portalColor | String    | None    | No       | A new color for the site portal banner, if omitted the previous color value is retained. Must be specified in HTML hexadecimal 16-bit color values using upper-case characters (e.g. '#1A2B3C').
-RemovePortalColor | Boolean | False | No     | If set to True, any previously configured portal color will be removed.
-customLinks | Hashtable | None    | No       | A hash of custom URL keys and values to be created or updated. Note that currently this serves no purpose as the customLinks functionality is not enabled in vCloud Director v9.x. Example: `@{'about'='https://my.company.com/about';'support'='https://my.company.com/support'}`
+Parameter         | Type      | Default | Required | Description
+---------------   | --------- | ------- | -------- | -----------
+Server            | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
+portalName        | String    | None    | No       | A new name for the site portal, if omitted the previous portal name is retained.
+portalColor       | String    | None    | No       | A new color for the site portal banner, if omitted the previous color value is retained. Must be specified in HTML hexadecimal 16-bit color values using upper-case characters (e.g. '#1A2B3C').
+RemovePortalColor | Boolean   | False   | No       | If set to True, any previously configured portal color will be removed.
+customLinks       | Hashtable | None    | No       | A hash of custom URL keys and values to be created or updated. Note that currently this serves no purpose as the customLinks functionality is not enabled in vCloud Director v9.x. Example: `@{'about'='https://my.company.com/about';'support'='https://my.company.com/support'}`
 
 Output:
 
@@ -86,20 +86,20 @@ A message confirms whether the requested changes have been successfully submitte
 Example:
 
 ```PowerShell
-C:\PS> Set-Branding -vcdHost 'my.cloud.com' -portalName 'My Cloud Portal'
+C:\PS> Set-Branding -Server 'my.cloud.com' -portalName 'My Cloud Portal'
 Branding configuration sent successfully.
 ```
 
 ## Get-Theme
 
-This function returns the list of currently configured themes in vCloud Director. It will usually show the default built-in themes ('Default' and 'Dark') as well as any custom themes created. If an optional ThemeName is supplied only themes matching that name will be returned (can be used to check if a theme already exists).
+This function returns the list of currently configured themes in vCloud Director. It will usually show the default built-in themes ('Default' and 'Dark') as well as any custom themes created. If an optional Theme is supplied only themes matching that name will be returned (can be used to check if a theme already exists).
 
 Parameters:
 
 Parameter   | Type      | Default | Required | Description
 ---------   | --------- | ------- | -------- | -----------
-vCDHost     | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
-ThemeName   | String    | None    | No       | A theme name to match, can be used to determine if a theme already exists.
+Server      | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
+Theme       | String    | None    | No       | A theme name to match, can be used to determine if a theme already exists.
 
 Output:
 
@@ -108,7 +108,7 @@ A PSObject of themes found in the vCloud instance.
 Example:
 
 ```PowerShell
-C:\PS> Get-Theme -vcdHost 'my.cloud.com'
+C:\PS> Get-Theme -Server 'my.cloud.com'
 
 themeType name
 --------- ----
@@ -125,9 +125,9 @@ Parameters:
 
 Parameter   | Type      | Default | Required | Description
 ---------   | --------- | ------- | -------- | -----------
-vCDHost     | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
-ThemeName   | String    | None    | Yes      | The theme to be set as the new system default theme. If the theme name cannot be matched an error will be generated and no changes made.
-custom      | Boolean   | true    | No       | Specifies whether the theme is a custom (user-created) theme or a built-in theme. Only needs to be specified (as 'false') if reverting to one of the VMware supplied default themes ('Default' or 'Dark').
+Server      | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
+Theme       | String    | None    | Yes      | The theme to be set as the new system default theme. If the theme name cannot be matched an error will be generated and no changes made.
+Custom      | Boolean   | true    | No       | Specifies whether the theme is a custom (user-created) theme or a built-in theme. Only needs to be specified (as 'false') if reverting to one of the VMware supplied default themes ('Default' or 'Dark').
 
 Output:
 
@@ -136,14 +136,14 @@ A message indicating that the default theme configuration has been set successfu
 Example 1: Set a custom theme as default:
 
 ```PowerShell
-C:\PS> Set-Theme -vCDHost 'my.cloud.com' -ThemeName 'MyTheme'
+C:\PS> Set-Theme -Server 'my.cloud.com' -Theme 'MyTheme'
 Default theme configuration set successfully.
 ```
 
 Example 2: Revert to default 'Dark' Theme:
 
 ```PowerShell
-C:\PS> Set-Theme -vCDHost 'my.cloud.com' -ThemeName 'Dark' -custom:$false
+C:\PS> Set-Theme -Server 'my.cloud.com' -Theme 'Dark' -Custom:$false
 Default theme configuration set successfully.
 ```
 
@@ -155,8 +155,8 @@ Parameters:
 
 Parameter   | Type      | Default | Required | Description
 ---------   | --------- | ------- | -------- | -----------
-vCDHost     | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
-ThemeName   | String    | None    | Yes      | The theme to be created. If the theme already exists an error will be generated and no changes made.
+Server      | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
+Theme       | String    | None    | Yes      | The theme to be created. If the theme already exists an error will be generated and no changes made.
 
 Output:
 
@@ -165,7 +165,7 @@ A message indicating that the new theme has been created successfully or an erro
 Example:
 
 ```PowerShell
-C:\PS> New-Theme -vCDHost 'my.cloud.com' -ThemeName 'MyTheme'
+C:\PS> New-Theme -Server 'my.cloud.com' -Theme 'MyTheme'
 Theme MyTheme created successfully.
 ```
 
@@ -177,8 +177,8 @@ Parameters:
 
 Parameter   | Type      | Default | Required | Description
 ---------   | --------- | ------- | -------- | -----------
-vCDHost     | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
-ThemeName   | String    | None    | Yes      | The theme to be removed. If the theme doesn't exist an error will be generated and no changes made.
+Server      | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
+Theme       | String    | None    | Yes      | The theme to be removed. If the theme doesn't exist an error will be generated and no changes made.
 
 Output:
 
@@ -187,7 +187,7 @@ A message indicating that the theme has been removed or an error.
 Example:
 
 ```PowerShell
-C:\PS> Remove-Theme -vCDHost 'my.cloud.com' -ThemeName 'MyTheme'
+C:\PS> Remove-Theme -Server 'my.cloud.com' -Theme 'MyTheme'
 Theme MyTheme was removed successfully.
 ```
 
@@ -199,8 +199,8 @@ Parameters:
 
 Parameter   | Type      | Default | Required | Description
 ---------   | --------- | ------- | -------- | -----------
-vCDHost     | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
-ThemeName   | String    | None    | Yes      | The theme to which the CSS content should be uploaded.
+Server      | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
+Theme       | String    | None    | Yes      | The theme to which the CSS content should be uploaded.
 CssFile     | String    | None    | Yes      | The path and filename of a .css file to be uplaoded as the CSS content for the specified theme, generally this will be the .css outputted by the VMware theme-builder.
 
 Output:
@@ -210,7 +210,7 @@ A message indicating whether the .css file has been successfully uploaded or not
 Example:
 
 ```PowerShell
-C:\PS> Publish-Css -vCDHost 'my.cloud.com' -ThemeName 'MyTheme' -CssFile 'mytheme.css'
+C:\PS> Publish-Css -Server 'my.cloud.com' -Theme 'MyTheme' -CssFile 'mytheme.css'
 Theme CSS file uploaded succesfully.
 ```
 
@@ -222,8 +222,8 @@ Parameters:
 
 Parameter   | Type      | Default | Required | Description
 ---------   | --------- | ------- | -------- | -----------
-vCDHost     | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
-ThemeName   | String    | None    | Yes      | The theme from which the CSS content should be retrieved.
+Server      | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
+Theme       | String    | None    | Yes      | The theme from which the CSS content should be retrieved.
 CssFile     | String    | None    | Yes      | The path and filename of a file to be written with the downloaded css information, an existing file with the same name will be overwritten.
 
 Output:
@@ -233,7 +233,7 @@ A message indicating whether or not the specified CSS was downloaded.
 Example:
 
 ```PowerShell
-C:\PS> Get-Css -vCDHost 'my.cloud.com' -ThemeName 'MyTheme' -CssFile 'mytheme.css'
+C:\PS> Get-Css -Server 'my.cloud.com' -Theme 'MyTheme' -CssFile 'mytheme.css'
 Theme CSS file downloaded succesfully.
 ```
 
@@ -245,7 +245,7 @@ Parameters:
 
 Parameter   | Type      | Default | Required | Description
 ---------   | --------- | ------- | -------- | -----------
-vCDHost     | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
+Server      | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
 LogoFile    | String    | None    | Yes      | The path and filename of a .png file to be uploaded as the portal logo.
 
 Output:
@@ -255,7 +255,7 @@ A message indicating whether the .png file has been successfully uploaded or not
 Example:
 
 ```PowerShell
-C:\PS> Publish-Logo -vCDHost 'my.cloud.com' -LogoFile 'mylogo.png'
+C:\PS> Publish-Logo -Server 'my.cloud.com' -LogoFile 'mylogo.png'
 System logo file uploaded succesfully.
 ```
 
@@ -267,7 +267,7 @@ Parameters:
 
 Parameter   | Type      | Default | Required | Description
 ---------   | --------- | ------- | -------- | -----------
-vCDHost     | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
+Server      | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
 LogoFile    | String    | None    | Yes      | The path and filename of a file to be written with the downloaded Logo file, an existing file with the same name will be overwritten.
 
 Output:
@@ -277,6 +277,6 @@ A message indicating whether or not the specified PNG file was downloaded.
 Example:
 
 ```PowerShell
-C:\PS> Get-Logo -vCDHost 'my.cloud.com'  -LogoFile 'mylogo.png'
+C:\PS> Get-Logo -Server 'my.cloud.com'  -LogoFile 'mylogo.png'
 Logo PNG file downloaded succesfully.
 ```
