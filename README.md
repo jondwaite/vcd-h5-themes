@@ -8,8 +8,8 @@ The table below shows the cmdlets included in this module, a brief description o
 
 cmdlet Name  | Function                                                  | Minimum API / vCD Version
 ------------ | --------------------------------------------------------- | ---------------------------
-[`Get-Branding`](#Get-Branding) | Gets the currently defined HTML5 portal branding settings | 30.0 (vCloud Director v9.1)
-[`Set-Branding`](#Set-Branding) | Sets the vCloud Director HTML5 portal branding settings   | 30.0 (vCloud Director v9.1)
+[`Get-Branding`](#Get-Branding) | Gets the currently defined HTML5 portal branding settings | 30.0 (vCloud Director v9.1) / 32.0 (vCloud Director 9.7) for per-tenant branding
+[`Set-Branding`](#Set-Branding) | Sets the vCloud Director HTML5 portal branding settings   | 30.0 (vCloud Director v9.1) / 32.0 (vCloud Director 9.7) for per-tenant branding
 [`Get-Theme`](#Get-Theme) | Gets the available portal themes                          | 30.0 (vCloud Director v9.1)
 [`Set-Theme`](#Set-Theme) | Sets which portal theme is the current system default     | 30.0 (vCloud Director v9.1)
 [`Remove-Theme`](#Remove-Theme) | Deletes a portal theme                                    | 30.0 (vCloud Director v9.1)
@@ -50,6 +50,7 @@ Parameters:
 Parameter  | Type   | Default | Required | Description
 ---------  | ------ | ------- | -------- | -----------
 Server     | String | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
+Tenant     | String | None    | No       | An optional value to get the per-tenant branding, will return the system default branding if no specific branding is defined for this tenant or the tenant cannot be found.
 
 Output:
 
@@ -75,9 +76,9 @@ Parameter         | Type      | Default | Required | Description
 ---------------   | --------- | ------- | -------- | -----------
 Server            | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
 portalName        | String    | None    | No       | A new name for the site portal, if omitted the previous portal name is retained.
-portalColor       | String    | None    | No       | A new color for the site portal banner, if omitted the previous color value is retained. Must be specified in HTML hexadecimal 16-bit color values using upper-case characters (e.g. '#1A2B3C').
-RemovePortalColor | Boolean   | False   | No       | If set to True, any previously configured portal color will be removed.
-customLinks       | Hashtable | None    | No       | A hash of custom URL keys and values to be created or updated. Note that currently this serves no purpose as the customLinks functionality is not enabled in vCloud Director v9.x. Example: `@{'about'='https://my.company.com/about';'support'='https://my.company.com/support'}`
+portalColor       | String    | None    | No       | A new color for the site portal banner, if omitted the previous color value is retained. Must be specified in HTML hexadecimal 16-bit color values using upper-case characters (e.g. '#1A2B3C'). If set to 'Remove' then any existing portal color will be removed.
+customLinks       | PSObject  | None    | No       | Custom links to be configured in the vCD Portal. Note that this functionality is only available in vCD versions >= 9.7 (API Version 32.0). The format of this entry has changed from the (non-functional) equivalent call in v9.5 and prior. See my blog post here for details on how to configure a suitable customLinks object and pass this to Set-Branding.
+Tenant            | String    | None    | No       | If specified the branding will be configured for the specified tenant only and the system default left unchanged. Note that this feature is only available in vCD versions >= 9.7 (API Version 32.0).
 
 Output:
 

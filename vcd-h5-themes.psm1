@@ -7,10 +7,10 @@
 # Requires that you are already connected to the vCD API
 # (Connect-CIServer) system contaxt prior to running the command.
 #
-# Copyright 2018 Jon Waite, All Rights Reserved
+# Copyright 2018-2019 Jon Waite, All Rights Reserved
 # Released under MIT License - see https://opensource.org/licenses/MIT
-# Date:    14th November 2018
-# Version: 1.0
+# Date:    9th April 2019
+# Version: 1.4.0
 
 
 # Get-SessionId is a helper function that gets the SessionId of the vCloud
@@ -85,7 +85,8 @@ Function Get-Server(
 }
 
 Function Get-Branding(
-    [string]$Server  # The vCD host to connect to, required if more than one vCD endpoint is connected.
+    [string]$Server,  # The vCD host to connect to, required if more than one vCD endpoint is connected.
+    [string]$Tenant   # The tenant to retrieve branding from (will return system default branding if not configured for this tenant or the tenant is not found).
 )
 {
 <#
@@ -100,19 +101,32 @@ Which vCloud Director API host to connect to (e.g. my.cloud.com). You must be
 connected to this host as a user in the system (Administrative) context using
 Connect-CIServer prior to running this command. This parameter is required
 if you are connected to multiple vCD environments.
+.PARAMETER Tenant
+Which vCloud Director Tenant to retrieve branding from, if no custom branding
+has been specified for the given tenant then the system-level branding will
+be returned.
 .OUTPUTS
 The currently defined branding settings as a PSObject
 .EXAMPLE
 Get-Branding -Server my.cloud.com
+.EXAMPLE
+Get-Branding -Server my.cloud.com -Tenant ABCInc
 .NOTES
 Requires functionality first introduced in vCloud Director v9.1 and will *NOT*
-work with any prior releases.
+work with any prior releases. Per-tenant branding requires functionality first
+introduced in vCloud Director 9.7 (API Version 32.0) and will *NOT* work with
+any prior release.
 #>
     $Server = Get-Server -Server $Server
     
     $apiVersion = Get-APIVersion -Server $Server
     if ($apiVersion -lt 30) {
         Write-Error("Get-Branding requires vCloud API v30 or later (vCloud Director 9.1), the detected API version is $apiVersion.")
+        return
+    }
+
+    if (($Tenant) -and ($apiVersion -lt 32)) {
+        Write-Error("Get-Branding for a specified Tenant requires vCloud API v32 or later (vCloud Director 9.7), the detected API version is $apiVersion.")
         return
     }
 
@@ -132,13 +146,11 @@ work with any prior releases.
 
 
 Function Set-Branding(
-    [string]$Server,                              # The vCD host to connect to
+    [string]$Server,                               # The vCD host to connect to
     [string]$portalName,                           # Portal title string
-    [Parameter(ParameterSetName="portalColor")]
-    [string]$portalColor,                          # Portal color (hex format '#ABCD12')
-    [Parameter(ParameterSetName="RemovePortalColor")]
-    [Switch]$RemovePortalColor,                    # Revert Portal color to none
-    [hashtable]$customLinks                        # Custom links to be added to portal
+    [string]$portalColor,                          # Portal color (hex format '#ABCD12') or 'Remove' to revert to default
+    [System.Object]$customLinks,                   # Custom links to be added to portal
+    [string]$Tenant                                # The tenant to configure this branding for (if not configuring system default)
 )
 {
 <#
@@ -159,19 +171,19 @@ specified the existing value will be unchanged.
 .PARAMETER portalColor
 An optional hex-formatted color values (in upper case) which determine the
 default portal background banner color (e.g. '#1A2A3A'). If not specified
-the existing value will be unchanged.
+the existing value will be unchanged. If specified as the string 'Remove' will
+remove any defined portal color value.
 .PARAMETER customLinks
-An optional hash table of custom URL links to be included in the vCloud\
-Director portal. NOTE as of vCloud Director v9.5 these links are not yet
-included in the portal anywhere and configuring these will have no effect.
-URLs will be validated by the vCloud API and rejected if they are not properly
-formed URL specifications.
+An object consisting of custom URL links to be included in the vCloud
+Director portal. Links will be validated by the vCloud API and rejected if 
+they are not properly formed URL specifications. See README.md for an example
+of a well-formatted object.
 .OUTPUTS
 The results of setting the portal Branding
 .EXAMPLE
 Set-Branding -Server my.cloud.com -portalName 'My Cloud Portal' -portalColor #1A2A3A
 .EXAMPLE
-Set-Branding -Server my.cloud.com -customLinks @{Support = 'https://my.cloud.com/support'; About = 'https://my.cloud.com/about'}
+Set-Branding -Server my.cloud.com -customLinks /// TODO ///
 .NOTES
 Requires functionality first introduced in vCloud Director v9.1 and will *NOT*
 work with any prior releases.
@@ -185,6 +197,11 @@ not specified in the Set-Branding options.
     $apiVersion = Get-APIVersion -Server $Server
     if ($apiVersion -lt 30) {
         Write-Error("Set-Branding requires vCloud API v30 or later (vCloud Director 9.1), the detected API version is $apiVersion.")
+        return
+    }
+
+    if (($Tenant) -and ($apiVersion -lt 32)) {
+        Write-Error("Set-Branding per-Tenant requires vCloud API v32 or later (vCloud Director 9.7), the detected API version is $apiVersion.")
         return
     }
 
@@ -202,11 +219,12 @@ not specified in the Set-Branding options.
     }
 
     if ($portalColor) {
-        $branding.Add('portalColor',$portalColor)
-    } elseif ($RemovePortalColor) {
-        $branding.Add('portalColor','')    
-    } 
-    else {
+        if ($portalColor = 'Remove') {
+            $branding.Add('portalColor','')
+        } else {
+            $branding.Add('portalColor',$portalColor)
+        }     
+    } else {
         $branding.Add('portalColor',$oldbranding.portalColor)
     }
     
@@ -217,20 +235,21 @@ not specified in the Set-Branding options.
     $branding.Add('selectedTheme',$selectedTheme)
 
     if ($customLinks) {
-        $linkobj = [System.Collections.ArrayList]@()
-        $customLinks.Keys | ForEach-Object {
-            $link = New-Object System.Collections.Specialized.OrderedDictionary
-            $link.Add('key',$_)
-            $link.Add('url',$customLinks[$_])
-            $linkobj.Add($link) | Out-Null
+        if ($APIVersion -lt 32) {
+            Write-Error("Definiting custom links requires vCloud API v32 or later (vCloud Director 9.7), the detected API version is $apiVersion.")
+            return
         }
-        $branding.Add('customLinks',($linkobj))
+        $branding.Add('customLinks',$customLinks)
     } else {
         $branding.Add('customLinks',$oldbranding.customLinks)
     }
 
     $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = 'application/json;version=31.0' }
-    $uri = 'https://' + $Server + '/cloudapi/branding'
+    if ($Tenant) {
+        $uri = 'https://' + $Server + '/cloudapi/branding/tenant/' + $Tenant
+    } else {
+        $uri = 'https://' + $Server + '/cloudapi/branding'
+    }
 
     try {
         $r1 = Invoke-WebRequest -Method Put -Uri $uri -Headers $headers -ContentType 'application/json' -Body ($branding | ConvertTo-Json)
@@ -399,7 +418,7 @@ New-Theme -Server my.cloud.com -Theme mytheme
 Requires functionality first introduced in vCloud Director v9.1 and will *NOT*
 work with any prior releases.
 #>
-    $Server = Get-Server -Server $Server4
+    $Server = Get-Server -Server $Server
 
     $apiVersion = Get-APIVersion -Server $Server
     if ($apiVersion -lt 30) {
@@ -417,7 +436,13 @@ work with any prior releases.
 
     $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = 'application/json;version=30.0' }
     $uri = "https://$Server/cloudapi/branding/themes/"
-    $body = [PSCustomObject]@{ name = $Theme } | ConvertTo-Json
+    
+    # For API v32.0 (and later?) we must specify a themeType value for this call to work:
+    if ($apiVersion -lt 32) {
+        $body = [PSCustomObject]@{ name = $Theme } | ConvertTo-Json
+    } else {
+        $body = [PSCustomObject]@{ themeType = "CUSTOM"; name = $Theme } | ConvertTo-Json
+    }
 
     try{
         Invoke-WebRequest -Method Post -Uri $uri -Headers $headers -Body $body -ContentType 'application/json' | Out-Null
@@ -429,8 +454,8 @@ work with any prior releases.
 }
 
 Function Remove-Theme(
-    [string]$Server,   # The vCD host to connect to
-    [Parameter(Mandatory=$true)][string]$Theme  # The name of the Theme to remove
+    [string]$Server,                            # The vCD host to connect to
+    [Parameter(Mandatory=$true)][string]$Theme  # The name of the vCD theme
 )
 {
 <#
