@@ -236,7 +236,7 @@ not specified in the Set-Branding options.
 
     if ($customLinks) {
         if ($APIVersion -lt 32) {
-            Write-Error("Definiting custom links requires vCloud API v32 or later (vCloud Director 9.7), the detected API version is $apiVersion.")
+            Write-Error("Defining custom links requires vCloud API v32 or later (vCloud Director 9.7), the detected API version is $apiVersion.")
             return
         }
         $branding.Add('customLinks',$customLinks)
