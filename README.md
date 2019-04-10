@@ -10,14 +10,16 @@ cmdlet Name  | Function                                                  | Minim
 ------------ | --------------------------------------------------------- | ---------------------------
 [`Get-Branding`](#Get-Branding) | Gets the currently defined HTML5 portal branding settings | 30.0 (vCloud Director v9.1) / 32.0 (vCloud Director 9.7) for per-tenant branding
 [`Set-Branding`](#Set-Branding) | Sets the vCloud Director HTML5 portal branding settings   | 30.0 (vCloud Director v9.1) / 32.0 (vCloud Director 9.7) for per-tenant branding
-[`Get-Theme`](#Get-Theme) | Gets the available portal themes                          | 30.0 (vCloud Director v9.1)
-[`Set-Theme`](#Set-Theme) | Sets which portal theme is the current system default     | 30.0 (vCloud Director v9.1)
+[`Get-Theme`](#Get-Theme) | Gets the available portal themes                                | 30.0 (vCloud Director v9.1)
+[`Set-Theme`](#Set-Theme) | Sets which portal theme is the current system default           | 30.0 (vCloud Director v9.1)
 [`Remove-Theme`](#Remove-Theme) | Deletes a portal theme                                    | 30.0 (vCloud Director v9.1)
-[`New-Theme`](#New-Theme) | Creates a new portal theme                                | 30.0 (vCloud Director v9.1)
-[`Publish-Css`](#Publish-Css) | Uploads a generated CSS file for a vCloud Director theme  | 31.0 (vCloud Director v9.5)
-[`Get-Css`](#Get-Css) | Downloads a CSS file from a vCloud Director theme         | 31.0 (vCloud Director v9.5)
-[`Publish-Logo`](#Publish-Logo) | Uploads a PNG file to be used as the portal logo | 30.0 (vCloud Director v9.1)
-[`Get-Logo`](#Get-Logo) | Downloads the PNG file being used as the portal logo | 30.0 (vCloud Director v9.1)
+[`New-Theme`](#New-Theme) | Creates a new portal theme                                      | 30.0 (vCloud Director v9.1)
+[`Publish-Css`](#Publish-Css) | Uploads a generated CSS file for a vCloud Director theme    | 31.0 (vCloud Director v9.5)
+[`Get-Css`](#Get-Css) | Downloads a CSS file from a vCloud Director theme                   | 31.0 (vCloud Director v9.5)
+[`Publish-Logo`](#Publish-Logo) | Uploads a PNG file to be used as the portal logo          | 30.0 (vCloud Director v9.1) / 32.0 (vCloud Director 9.7) for per-tenant branding
+[`Get-Logo`](#Get-Logo) | Downloads the PNG file being used as the portal logo              | 30.0 (vCloud Director v9.1) / 32.0 (vCloud Director 9.7) for per-tenant branding
+[`Publish-Icon`](#Publish-Icon) | Uploads a PNG file to be used as the browser icon         | 32.0 (vCloud Director v9.7)
+[`Get-Icon`](#Get-Icon) | Downloads the PNG file being used as the browser icon             | 32.0 (vCloud Director v9.7)
 
 The sections below provide documentation of each cmdlet and the parameters it takes together with example usage information.
 
@@ -248,6 +250,7 @@ Parameter   | Type      | Default | Required | Description
 ---------   | --------- | ------- | -------- | -----------
 Server      | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
 LogoFile    | String    | None    | Yes      | The path and filename of a .png file to be uploaded as the portal logo.
+Tenant      | String    | None    | No       | The Tenant Organization for which the logo should be published. Note that this option requires vCloud API v32.0 (vCloud Director 9.7) or later.
 
 Output:
 
@@ -270,6 +273,7 @@ Parameter   | Type      | Default | Required | Description
 ---------   | --------- | ------- | -------- | -----------
 Server      | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
 LogoFile    | String    | None    | Yes      | The path and filename of a file to be written with the downloaded Logo file, an existing file with the same name will be overwritten.
+Tenant      | String    | None    | No       | The Tenant Organization from which the logo should be downloaded. Note that this option requires vCloud API v32.0 (vCloud Director 9.7) or later.
 
 Output:
 
@@ -279,5 +283,51 @@ Example:
 
 ```PowerShell
 C:\PS> Get-Logo -Server 'my.cloud.com'  -LogoFile 'mylogo.png'
+Logo PNG file downloaded succesfully.
+```
+
+## Publish-Icon
+
+This function uploads the specified PNG file as the portal browser icon.
+
+Parameters:
+
+Parameter   | Type      | Default | Required | Description
+---------   | --------- | ------- | -------- | -----------
+Server      | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
+IconFile    | String    | None    | Yes      | The path and filename of a .png file to be uploaded as the portal browser icon.
+Tenant      | String    | None    | No       | The Tenant Organization for which the browser icon should be published.
+
+Output:
+
+A message indicating whether the .png file has been successfully uploaded or not.
+
+Example:
+
+```PowerShell
+C:\PS> Publish-Icon -Server 'my.cloud.com' -IconFile 'myicon.png'
+System icon file uploaded succesfully.
+```
+
+## Get-Icon
+
+This function downloads a PNG file of the current portal browser icon.
+
+Parameters:
+
+Parameter   | Type      | Default | Required | Description
+---------   | --------- | ------- | -------- | -----------
+Server      | String    | None    | No       | The FQDN of the vCloud Site (e.g. 'my.cloud.com'). Must be specified if you are connected to multiple vCD sites (Connect-CIServer) already. If only connected to a single vCD site then this will be used automatically.
+IconFile    | String    | None    | Yes      | The path and filename of a file to be written with the downloaded browser icon file, an existing file with the same name will be overwritten.
+Tenant      | String    | None    | No       | The Tenant Organization from which the logo should be downloaded.
+
+Output:
+
+A message indicating whether or not the specified PNG file was downloaded.
+
+Example:
+
+```PowerShell
+C:\PS> Get-Icon -Server 'my.cloud.com'  -IconFile 'myicon.png'
 Logo PNG file downloaded succesfully.
 ```

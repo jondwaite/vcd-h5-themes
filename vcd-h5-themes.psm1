@@ -9,8 +9,8 @@
 #
 # Copyright 2018-2019 Jon Waite, All Rights Reserved
 # Released under MIT License - see https://opensource.org/licenses/MIT
-# Date:    9th April 2019
-# Version: 1.4.0
+# Date:    11th April 2019
+# Version: 1.5.0
 
 
 # Get-SessionId is a helper function that gets the SessionId of the vCloud
@@ -667,17 +667,24 @@ work with any prior releases.
 
 
 Function Publish-Logo(
-    [string]$Server,  # The vCD host to connect to, required if more than one vCD endpoint is connected.
-    [Parameter(Mandatory=$true)][string]$LogoFile   # The filename for the logo to be uploaded
+    [string]$Server,                                 # The vCD host to connect to, required if more than one vCD endpoint is connected.
+    [Parameter(Mandatory=$true)][string]$LogoFile,   # The filename for the logo to be uploaded
+    [string]$Tenant                                  # Optional value of the tenant for which this Logo is published, if not specified the system-default logo will be changed
 )
 {
 <#
 .SYNOPSIS
-Uploads a graphic file (PNG format) to be used as the site logo.
+Uploads a graphic file (PNG format) to be used as the vCloud site logo, if
+no Tenant is specified this will be the default system logo, if a tenant is
+specified this logo will only be applied for that tenant portal.
 .DESCRIPTION
-Publish-Logo provides an easy method to change the global site logo for a
-vCloud Director site. This logo will appear in the title bar and on the
-default login screen for the site.
+Publish-Logo provides an easy method to change sites logo for a vCloud
+Director portal. This logo will appear in the title bar and on the
+default login screen for the site (for the system default logo - for a tenant
+specific logo this will appear only in the vCloud title bar when logged in
+to that tenant environment). This can be set on a per-tenant basis for
+vCloud Director v9.7 (API v32.0) or later. For prior releases the logo can
+only be set on a site-wide (system default) basis.
 .PARAMETER Server
 Which vCloud Director API host to connect to (e.g. my.cloud.com). You must be
 connected to this host as a user in the system (Administrative) context using
@@ -685,13 +692,20 @@ Connect-CIServer prior to running this command. This parameter is required
 if you are connected to multiple vCD environments.
 .PARAMETER LogoFile
 A mandatory parameter of the png file containing the logo to be uploaded.
+.PARAMETER Tenant
+The vCloud Director tenant organization which this logo should be applied to,
+if not specified the logo will be applied as the system default to all portals.
 .OUTPUTS
 A message indicating whether the logo has been successfully uploaded.
 .EXAMPLE
 Publish-Logo -Server my.cloud.com -LogoFile mylogo.png
+.EXAMPLE
+Publish-Logo -Server my.cloud.com -LogoFile tenantorg.png -Tenant tenantorg
 .NOTES
 Requires functionality first introduced in vCloud Director v9.1 and will *NOT*
-work with any prior releases.
+work with any prior releases. Setting per-tenant logo requires functionality
+first introduced in vCloud Director v9.7 and will *NOT* work with any prior
+release.
 #>
     $Server = Get-Server -Server $Server
     
@@ -701,16 +715,26 @@ work with any prior releases.
         return
     }
 
+    if (($Tenant) -and ($apiVersion -lt 32)) {
+        Write-Error("Publish-Logo with -Tenant specification requires vCloud API v32 or later (vCloud Director 9.7), the detected API version is $apiVersion.")
+        return
+    }
+
     $mySessionID = Get-SessionId($Server)
     if (!$mySessionID) { return }
 
     if (!(Test-Path -Path $LogoFile)){
-         Write-Error ("Error, could not locate css theme file: $CssFile.")
+         Write-Error ("Error, could not locate Logo file: $LogoFile.")
          Return
     }
 
     $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = 'application/json;version=30.0' }
-    $uri = 'https://' + $Server + '/cloudapi/branding/logo'
+
+    if ($Tenant) {
+        $uri = 'https://' + $Server + '/cloudapi/branding/tenant/' + $Tenant + '/logo'
+    } else {
+        $uri = 'https://' + $Server + '/cloudapi/branding/logo'
+    }
     
     try {
         Invoke-WebRequest -Uri $uri -Headers $headers -Method Put -InFile $LogoFile -ContentType 'image/png' | Out-Null
@@ -719,13 +743,17 @@ work with any prior releases.
         return
     }
 
-    Write-Host("System logo file uploaded succesfully.")
+    if ($Tenant) {
+        Write-Host("Tenant logo for $Tenant uploaded successfully.")
+    } else {
+        Write-Host("System logo file uploaded succesfully.")
+    }
 }
 
-
 Function Get-Logo(
-    [string]$Server,   # The vCD host to connect to
-    [Parameter(Mandatory=$true)][string]$LogoFile    # The Logo file to be downloaded
+    [string]$Server,                                  # The vCD host to connect to
+    [Parameter(Mandatory=$true)][string]$LogoFile,    # The Logo file to be downloaded
+    [string]$Tenant                                   # Optional value of the tenant from which this logo should be obtained.
 )
 {
 <#
@@ -742,14 +770,21 @@ if you are connected to multiple vCD environments.
 .PARAMETER LogoFile
 The file to which the logo will be saved as. Any existing file with the same
 name will be overwritten.
+.PARAMETER Tenant
+The vCloud Director tenant organization from which the logo should be obtained,
+if not specified the system default logo will be downloaded.
 .OUTPUTS
 A message will confirm whether the logo file has been sucessfully downloaded or
 a failure alert will be generated.
 .EXAMPLE
 Get-Logo -Server my.cloud.com -LogoFile mylogo.png
+.EXAMPLE
+Get-Logo -Server my.cloud.com -LogoFile mylogo.png -Tenant tenantorg
 .NOTES
 Requires functionality first introduced in vCloud Director v9.1 and will *NOT*
-work with any prior releases.
+work with any prior releases. Downloading a per-tenant logo file requires
+functionality first introduced in vCloud Director 9.7 (API version 32.0) and
+will *NOT* work in previous releases.
 #>
     $Server = Get-Server -Server $Server    
 
@@ -759,20 +794,169 @@ work with any prior releases.
         return
     }
 
+    if (($Tenant) -and ($apiVersion -lt 32)) {
+        Write-Error("Get-Logo with -Tenant specification requires vCloud API v32 or later (vCloud Director 9.7), the detected API version is $apiVersion.")
+        return
+    }
+
     $mySessionID = Get-SessionId($Server)
     if (!$mySessionID) { return }
 
     $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = 'image/png;version=30.0' }
-    $uri = "https://$Server/cloudapi/branding/logo"
-    
+
+    if ($Tenant) {
+        $uri = "https://$Server/cloudapi/branding/tenant/$Tenant/logo"
+    } else {
+        $uri = "https://$Server/cloudapi/branding/logo"
+    }
+
     try {
         Invoke-WebRequest -Method Get -Uri $URI -Headers $headers -OutFile $LogoFile
     } catch {
-        Write-Error ("Error occurred retrieving CSS, Status Code is $($_.Exception.Response.StatusCode.Value__).")
+        Write-Error ("Error occurred retrieving logo, Status Code is $($_.Exception.Response.StatusCode.Value__).")
         return
     }
     Write-Host("Logo PNG file downloaded succesfully.")
 }
+
+Function Publish-Icon(
+    [string]$Server,                                 # The vCD host to connect to, required if more than one vCD endpoint is connected.
+    [Parameter(Mandatory=$true)][string]$IconFile,   # The filename for the icon to be uploaded
+    [string]$Tenant                                  # Optional value of the tenant for which this icon is published, if not specified the system-default icon will be changed
+)
+{
+<#
+.SYNOPSIS
+Uploads a graphic file (PNG format) to be used as the vCloud site browser icon,
+if no Tenant is specified this will be the default system icon, if a tenant is
+specified this icon will only be applied for that tenant portal.
+.DESCRIPTION
+Publish-Icon provides an easy method to change browser icon for a vCloud
+Director portal. This icon will appear in the browser window for the site.
+This can be set on a per-tenant basis using the -Tenant parameter.
+.PARAMETER Server
+Which vCloud Director API host to connect to (e.g. my.cloud.com). You must be
+connected to this host as a user in the system (Administrative) context using
+Connect-CIServer prior to running this command. This parameter is required
+if you are connected to multiple vCD environments.
+.PARAMETER IconFile
+A mandatory parameter of the png file containing the icon to be uploaded.
+.PARAMETER Tenant
+The vCloud Director tenant organization which this icon should be applied to,
+if not specified the icon will be applied as the system default.
+.OUTPUTS
+A message indicating whether the icon has been successfully uploaded.
+.EXAMPLE
+Publish-Icon -Server my.cloud.com -IconFile myicon.png
+.EXAMPLE
+Publish-Icon -Server my.cloud.com -IconFile tenantorg.png -Tenant tenantorg
+.NOTES
+Requires functionality first introduced in vCloud Director v9.7 (API version
+32.0) and will *NOT* work with any prior releases.
+#>
+    $Server = Get-Server -Server $Server
+    
+    $apiVersion = Get-APIVersion -Server $Server
+    if ($apiVersion -lt 32) {
+        Write-Error("Publish-Icon requires vCloud API v32 or later (vCloud Director 9.7), the detected API version is $apiVersion.")
+        return
+    }
+
+    $mySessionID = Get-SessionId($Server)
+    if (!$mySessionID) { return }
+
+    if (!(Test-Path -Path $IconFile)){
+         Write-Error ("Error, could not locate icon file: $IconFile.")
+         Return
+    }
+
+    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = 'application/json;version=30.0' }
+
+    if ($Tenant) {
+        $uri = 'https://' + $Server + '/cloudapi/branding/tenant/' + $Tenant + '/icon'
+    } else {
+        $uri = 'https://' + $Server + '/cloudapi/branding/icon'
+    }
+    
+    try {
+        Invoke-WebRequest -Uri $uri -Headers $headers -Method Put -InFile $IconFile -ContentType 'image/png' | Out-Null
+    } catch {
+        Write-Error ("Error occurred obtaining uploading icon file, Status Code is $($_.Exception.Response.StatusCode.Value__).")
+        return
+    }
+
+    if ($Tenant) {
+        Write-Host("Tenant icon for $Tenant uploaded successfully.")
+    } else {
+        Write-Host("System icon file uploaded succesfully.")
+    }
+}
+
+Function Get-Icon(
+    [string]$Server,                                  # The vCD host to connect to
+    [Parameter(Mandatory=$true)][string]$IconFile,    # The Icon file to be downloaded
+    [string]$Tenant                                   # Optional value of the tenant from which this Icon should be obtained.
+)
+{
+<#
+.SYNOPSIS
+Downloads a graphic file (PNG format) from the vCloud site browser icon,
+if no Tenant is specified this will be the default system icon, if a tenant is
+specified this will be the icon for that tenant portal.
+.DESCRIPTION
+Get-Icon provides an easy method to retrieve the browser icon for a vCloud
+Director portal.
+.PARAMETER Server
+Which vCloud Director API host to connect to (e.g. my.cloud.com). You must be
+connected to this host as a user in the system (Administrative) context using
+Connect-CIServer prior to running this command. This parameter is required
+if you are connected to multiple vCD environments.
+.PARAMETER IconFile
+A mandatory parameter of the png file where the icon will be written, existing
+files with the same name will be overwritten.
+.PARAMETER Tenant
+If specified, the browser icon for this specific tenant organization will be
+retrieved instead of the system default icon.
+.OUTPUTS
+A message indicating whether the icon has been successfully downloaded.
+.EXAMPLE
+Get-Icon -Server my.cloud.com -IconFile myicon.png
+.EXAMPLE
+Get-Icon -Server my.cloud.com -IconFile tenantorg.png -Tenant tenantorg
+.NOTES
+Requires functionality first introduced in vCloud Director v9.7 (API version
+32.0) and will *NOT* work with any prior releases.
+#>
+#>
+    $Server = Get-Server -Server $Server    
+
+    $apiVersion = Get-APIVersion -Server $Server
+    if ($apiVersion -lt 32) {
+        Write-Error("Get-Icon requires vCloud API v32 or later (vCloud Director 9.7), the detected API version is $apiVersion.")
+        return
+    }
+
+    $mySessionID = Get-SessionId($Server)
+    if (!$mySessionID) { return }
+
+    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = 'image/png;version=30.0' }
+
+    if ($Tenant) {
+        $uri = "https://$Server/cloudapi/branding/tenant/$Tenant/icon"
+    } else {
+        $uri = "https://$Server/cloudapi/branding/icon"
+    }
+
+    try {
+        Invoke-WebRequest -Method Get -Uri $URI -Headers $headers -OutFile $IconFile
+    } catch {
+        Write-Error ("Error occurred retrieving icon, Status Code is $($_.Exception.Response.StatusCode.Value__).")
+        return
+    }
+    Write-Host("Icon PNG file downloaded succesfully.")
+}
+
+
 
 
 # Make module functions accessible publically:
@@ -786,3 +970,5 @@ Export-ModuleMember -Function Publish-Css
 Export-ModuleMember -Function Get-Css
 Export-ModuleMember -Function Publish-Logo
 Export-ModuleMember -Function Get-Logo
+Export-ModuleMember -Function Publish-Icon
+Export-ModuleMember -Function Get-Icon

@@ -12,7 +12,7 @@
 RootModule = 'vcd-h5-themes.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.4.0'
+ModuleVersion = '1.5.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -27,7 +27,7 @@ Author = 'Jon Waite'
 CompanyName = 'kiwicloud.ninja'
 
 # Copyright statement for this module
-Copyright = '(c) Jon Waite. All rights reserved.'
+Copyright = '(c)2018-2019 Jon Waite. All rights reserved.'
 
 # Description of the functionality provided by this module
 Description = 'vcd-h5-themes provides cmdlets to assist vCloud Service Providers in managing theme customization for the vCloud Director 9.x HTML5 portal.'
@@ -69,7 +69,7 @@ Description = 'vcd-h5-themes provides cmdlets to assist vCloud Service Providers
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @( 'Get-Branding','Set-Branding','Get-Theme','Set-Theme','Remove-Theme','New-Theme','Publish-Css','Get-Css', "Publish-Logo", "Get-Logo" )
+FunctionsToExport = @( 'Get-Branding','Set-Branding','Get-Theme','Set-Theme','Remove-Theme','New-Theme','Publish-Css','Get-Css', "Publish-Logo", "Get-Logo", "Publish-Icon", "Get-Icon" )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = '*'
