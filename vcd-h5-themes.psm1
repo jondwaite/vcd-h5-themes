@@ -219,7 +219,7 @@ not specified in the Set-Branding options.
     }
 
     if ($portalColor) {
-        if ($portalColor = 'Remove') {
+        if ($portalColor -eq 'Remove') {
             $branding.Add('portalColor','')
         } else {
             $branding.Add('portalColor',$portalColor)
