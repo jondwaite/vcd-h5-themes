@@ -9,8 +9,8 @@
 #
 # Copyright 2018-2019 Jon Waite, All Rights Reserved
 # Released under MIT License - see https://opensource.org/licenses/MIT
-# Date:    11th April 2019
-# Version: 1.5.0
+# Date:    2nd August 2019
+# Version: 1.5.1
 
 
 # Get-SessionId is a helper function that gets the SessionId of the vCloud
