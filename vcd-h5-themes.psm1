@@ -574,17 +574,17 @@ administration options as for previous vCloud Director versions.
     $uri = 'https://' + $Server + '/cloudapi/branding/themes/' + $Theme + '/contents'
     $body = [pscustomobject]@{fileName=$CssFileName; size=$((Get-Item $CssFile).Length)} | ConvertTo-Json
 
-    try {
-        $r1 = Invoke-WebRequest -Method Post -Uri $URI -Headers $headers -Body $body -ContentType 'application/json'
-    } catch {
-        Write-Error ("Error occurred obtaining upload link, Status Code is $($_.Exception.Response.StatusCode.Value__).")
-        return        
-    }
-  
-    # Request 2 - use the retrieved upload link to upload the file:
-    $uploaduri = $r1.RelationLink['upload:default']
+	try {
+		$response = Invoke-WebRequest -Method Post -Uri $URI -Headers $headers -Body $body -ContentType 'application/json'
+	} catch {
+		Write-Error ("Error occurred during upload, Status Code is $($_.Exception.Response.StatusCode.Value__).")
+		return
+	}
+	
+	# Extract the upload URI from the returned headers:
+	$uploaduri = [Regex]::new("(?<=<).*(?=>)").match($response.Headers.Link).Value
 
-    try {
+	try {
         Invoke-WebRequest -Uri $uploaduri -Headers $headers -Method Put -InFile $CssFile | Out-Null
     } catch {
         Write-Error ("Error occurred obtaining uploading CSS file, Status Code is $($_.Exception.Response.StatusCode.Value__).")
