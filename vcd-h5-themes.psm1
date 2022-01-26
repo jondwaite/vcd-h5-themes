@@ -11,7 +11,10 @@
 # Released under MIT License - see https://opensource.org/licenses/MIT
 # Date:    7th August 2019
 # Version: 1.5.2
-
+#
+# Date:     26th January 2022
+# Version: 1.6.0
+# Updates: For recent VCD releases (10.3.2)
 
 # Get-SessionId is a helper function that gets the SessionId of the vCloud
 # session (Connect-CIServer) that matches the specified vCD Host endpoint.
@@ -50,6 +53,7 @@ Function Get-SessionId(
 # Get-APIVersion is a helper function that retrieves the highest supported
 # API version from the given vCD endpoint. This ensures that commands are not
 # run against unsupported versions of the vCloud Director API.
+# Returned value is a string which can be cast to a [Float] e.g. 
 Function Get-APIVersion(
     [string]$Server
 )
@@ -65,7 +69,8 @@ Function Get-APIVersion(
             Write-Error ("This can be caused by an untrusted SSL certificate on your Server.")
             return   
         }
-        return [int](($apiversions.SupportedVersions.VersionInfo | Where-Object { $_.deprecated -eq $false } | Sort-Object Version -Descending | Select-Object -First 1).Version)
+
+        return [string](($apiversions.SupportedVersions.VersionInfo | Where-Object { $_.deprecated -eq $false } | Sort-Object Version -Descending | Select-Object -First 1).Version)
     } else {
         Write-Error ("Could not establish Server, if you are connected to multiple servers you must specify -Server option.")
     }
@@ -120,23 +125,30 @@ any prior release.
     $Server = Get-Server -Server $Server
     
     $apiVersion = Get-APIVersion -Server $Server
-    if ($apiVersion -lt 30) {
+    if ([Float]$apiVersion -lt 30) {
         Write-Error("Get-Branding requires vCloud API v30 or later (vCloud Director 9.1), the detected API version is $apiVersion.")
         return
     }
 
-    if (($Tenant) -and ($apiVersion -lt 32)) {
+    if (($Tenant) -and ([Float]$apiVersion -lt 32)) {
         Write-Error("Get-Branding for a specified Tenant requires vCloud API v32 or later (vCloud Director 9.7), the detected API version is $apiVersion.")
         return
     }
 
+    # For API path change in VCD 10.3+:
+    if ([Float]$apiVersion -lt 36.0) {
+        $uri = "https://$Server/cloudapi/branding"
+    } else {
+        $uri = "https://$Server/cloudapi/branding/themes"
+    }
+    
     $mySessionID = Get-SessionId($Server)
     if (!$mySessionID) { return }
 
-    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = 'application/json;version=30.0' }
+    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = "application/json;version=$APIVersion" }
     
     try {
-        $r1 = Invoke-WebRequest -Method Get -Uri "https://$Server/cloudapi/branding" -Headers $headers
+        $r1 = Invoke-WebRequest -Method Get -Uri $uri -Headers $headers
     } catch {
         Write-Error ("Could not retrieve branding from API, Status Code is $($_.Exception.Response.StatusCode.Value__).")
         return        
@@ -195,12 +207,12 @@ not specified in the Set-Branding options.
     $Server = Get-Server -Server $Server
 
     $apiVersion = Get-APIVersion -Server $Server
-    if ($apiVersion -lt 30) {
+    if ([Float]$apiVersion -lt 30) {
         Write-Error("Set-Branding requires vCloud API v30 or later (vCloud Director 9.1), the detected API version is $apiVersion.")
         return
     }
 
-    if (($Tenant) -and ($apiVersion -lt 32)) {
+    if (($Tenant) -and ([Float]$apiVersion -lt 32)) {
         Write-Error("Set-Branding per-Tenant requires vCloud API v32 or later (vCloud Director 9.7), the detected API version is $apiVersion.")
         return
     }
@@ -235,7 +247,7 @@ not specified in the Set-Branding options.
     $branding.Add('selectedTheme',$selectedTheme)
 
     if ($customLinks) {
-        if ($APIVersion -lt 32) {
+        if ([Float]$APIVersion -lt 32) {
             Write-Error("Defining custom links requires vCloud API v32 or later (vCloud Director 9.7), the detected API version is $apiVersion.")
             return
         }
@@ -244,7 +256,7 @@ not specified in the Set-Branding options.
         $branding.Add('customLinks',$oldbranding.customLinks)
     }
 
-    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = 'application/json;version=31.0' }
+    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = "application/json;version=$apiVersion" }
     if ($Tenant) {
         $uri = 'https://' + $Server + '/cloudapi/branding/tenant/' + $Tenant
     } else {
@@ -298,7 +310,7 @@ work with any prior releases.
     $Server = Get-Server -Server $Server
 
     $apiVersion = Get-APIVersion -Server $Server
-    if ($apiVersion -lt 30) {
+    if ([Float]$apiVersion -lt 30) {
         Write-Error("Get-Theme requires vCloud API v30 or later (vCloud Director 9.1), the detected API version is $apiVersion.")
         return
     }
@@ -306,7 +318,7 @@ work with any prior releases.
     $mySessionID = Get-SessionId($Server)
     if (!$mySessionID) { return }
     
-    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = 'application/json;version=30.0' }
+    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = "application/json;version=$APIVersion" }
     $uri = 'https://' + $Server + '/cloudapi/branding/themes'
     $r1 = Invoke-WebRequest -Method Get -Uri $uri -Headers $headers -ContentType 'application/json'
     $results = ($r1.Content | ConvertFrom-Json) #| Where-Object { $_.themeType -eq 'CUSTOM' }
@@ -353,7 +365,7 @@ work with any prior releases.
     $Server = Get-Server -Server $Server
 
     $apiVersion = Get-APIVersion -Server $Server
-    if ($apiVersion -lt 30) {
+    if ([Float]$apiVersion -lt 30) {
         Write-Error("Set-Theme requires vCloud API v30 or later (vCloud Director 9.1), the detected API version is $apiVersion.")
         return
     }
@@ -375,7 +387,7 @@ work with any prior releases.
         $branding.selectedTheme.themeType = 'DEFAULT'
     }
 
-    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = 'application/json;version=30.0' }
+    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = "application/json;version=$apiVersion" }
     $uri = "https://$Server/cloudapi/branding"
     
     try {
@@ -421,7 +433,7 @@ work with any prior releases.
     $Server = Get-Server -Server $Server
 
     $apiVersion = Get-APIVersion -Server $Server
-    if ($apiVersion -lt 30) {
+    if ([Float]$apiVersion -lt 30) {
         Write-Error("New-Theme requires vCloud API v30 or later (vCloud Director 9.1), the detected API version is $apiVersion.")
         return
     }
@@ -434,11 +446,11 @@ work with any prior releases.
         return
     }
 
-    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = 'application/json;version=30.0' }
+    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = "application/json;version=$apiVersion" }
     $uri = "https://$Server/cloudapi/branding/themes/"
     
     # For API v32.0 (and later?) we must specify a themeType value for this call to work:
-    if ($apiVersion -lt 32) {
+    if ([Float]$apiVersion -lt 32) {
         $body = [PSCustomObject]@{ name = $Theme } | ConvertTo-Json
     } else {
         $body = [PSCustomObject]@{ themeType = "CUSTOM"; name = $Theme } | ConvertTo-Json
@@ -482,7 +494,7 @@ work with any prior releases.
     $Server = Get-Server -Server $Server
 
     $apiVersion = Get-APIVersion -Server $Server
-    if ($apiVersion -lt 30) {
+    if ([Float]$apiVersion -lt 30) {
         Write-Error("Remove-Theme requires vCloud API v30 or later (vCloud Director 9.1), the detected API version is $apiVersion.")
         return
     }
@@ -495,7 +507,7 @@ work with any prior releases.
         return
     }
 
-    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = 'application/json;version=30.0' }
+    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = "application/json;version=$apiVersion" }
     $uri = "https://$Server/cloudapi/branding/themes/$Theme"
     $body = [PSCustomObject]@{ name = $Theme } | ConvertTo-Json
 
@@ -549,7 +561,7 @@ administration options as for previous vCloud Director versions.
     $Server = Get-Server -Server $Server    
 
     $apiVersion = Get-APIVersion -Server $Server
-    if ($apiVersion -lt 31) {
+    if ([Float]$apiVersion -lt 31) {
         Write-Error("Publish-Css requires vCloud API v31 or later (vCloud Director 9.5), the detected API version is $apiVersion.")
         return
     }
@@ -570,7 +582,7 @@ administration options as for previous vCloud Director versions.
     $CssFileName = $CssFile | Split-Path -Leaf
 
     # Request 1 - register the filename to retrieve the upload link for the .CSS content:
-    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = 'application/json;version=31.0' }
+    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = "application/json;version=$apiVersion" }
     $uri = 'https://' + $Server + '/cloudapi/branding/themes/' + $Theme + '/contents'
     $body = [pscustomobject]@{fileName=$CssFileName; size=$((Get-Item $CssFile).Length)} | ConvertTo-Json
 
@@ -632,7 +644,7 @@ work with any prior releases.
     $Server = Get-Server -Server $Server    
 
     $apiVersion = Get-APIVersion -Server $Server
-    if ($apiVersion -lt 31) {
+    if ([Float]$apiVersion -lt 31) {
         Write-Error("Get-Css requires vCloud API v31 or later (vCloud Director 9.5), the detected API version is $apiVersion.")
         return
     }
@@ -645,16 +657,19 @@ work with any prior releases.
         return
     }
 
-    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = 'text/css;version=31.0' }
+    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = "text/css;version=$apiVersion" }
     $uri = "https://$Server/cloudapi/branding/themes/$Theme/css"
     
     try {
         $r1 = Invoke-WebRequest -Method Get -Uri $URI -Headers $headers -ContentType 'application/json'
     } catch {
         Write-Error ("Error occurred retrieving CSS, Status Code is $($_.Exception.Response.StatusCode.Value__).")
+        if (($_.Exception.Response.StatusCode.Value__) -eq 404) {
+            Write-Host "Code 404 can mean that no custom CSS exists for the specified theme."
+        }
         return
     }
-  
+
     try {
         $r1.Content | Out-File $CssFile -Append:$false
     } catch {
@@ -710,12 +725,12 @@ release.
     $Server = Get-Server -Server $Server
     
     $apiVersion = Get-APIVersion -Server $Server
-    if ($apiVersion -lt 30) {
+    if ([Float]$apiVersion -lt 30) {
         Write-Error("Publish-Logo requires vCloud API v30 or later (vCloud Director 9.1), the detected API version is $apiVersion.")
         return
     }
 
-    if (($Tenant) -and ($apiVersion -lt 32)) {
+    if (($Tenant) -and ([Float]$apiVersion -lt 32)) {
         Write-Error("Publish-Logo with -Tenant specification requires vCloud API v32 or later (vCloud Director 9.7), the detected API version is $apiVersion.")
         return
     }
@@ -728,7 +743,7 @@ release.
          Return
     }
 
-    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = 'application/json;version=30.0' }
+    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = "application/json;version=$apiVersion" }
 
     if ($Tenant) {
         $uri = 'https://' + $Server + '/cloudapi/branding/tenant/' + $Tenant + '/logo'
@@ -789,12 +804,12 @@ will *NOT* work in previous releases.
     $Server = Get-Server -Server $Server    
 
     $apiVersion = Get-APIVersion -Server $Server
-    if ($apiVersion -lt 30) {
+    if ([Float]$apiVersion -lt 30) {
         Write-Error("Get-Logo requires vCloud API v30 or later (vCloud Director 9.1), the detected API version is $apiVersion.")
         return
     }
 
-    if (($Tenant) -and ($apiVersion -lt 32)) {
+    if (($Tenant) -and ([Float]$apiVersion -lt 32)) {
         Write-Error("Get-Logo with -Tenant specification requires vCloud API v32 or later (vCloud Director 9.7), the detected API version is $apiVersion.")
         return
     }
@@ -802,7 +817,7 @@ will *NOT* work in previous releases.
     $mySessionID = Get-SessionId($Server)
     if (!$mySessionID) { return }
 
-    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = 'image/png;version=30.0' }
+    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = "image/png;version=$apiVersion" }
 
     if ($Tenant) {
         $uri = "https://$Server/cloudapi/branding/tenant/$Tenant/logo"
@@ -857,7 +872,7 @@ Requires functionality first introduced in vCloud Director v9.7 (API version
     $Server = Get-Server -Server $Server
     
     $apiVersion = Get-APIVersion -Server $Server
-    if ($apiVersion -lt 32) {
+    if ([Float]$apiVersion -lt 32) {
         Write-Error("Publish-Icon requires vCloud API v32 or later (vCloud Director 9.7), the detected API version is $apiVersion.")
         return
     }
@@ -870,7 +885,7 @@ Requires functionality first introduced in vCloud Director v9.7 (API version
          Return
     }
 
-    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = 'application/json;version=30.0' }
+    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = "application/json;version=$apiVersion" }
 
     if ($Tenant) {
         $uri = 'https://' + $Server + '/cloudapi/branding/tenant/' + $Tenant + '/icon'
@@ -931,7 +946,7 @@ Requires functionality first introduced in vCloud Director v9.7 (API version
     $Server = Get-Server -Server $Server    
 
     $apiVersion = Get-APIVersion -Server $Server
-    if ($apiVersion -lt 32) {
+    if ([Float]$apiVersion -lt 32) {
         Write-Error("Get-Icon requires vCloud API v32 or later (vCloud Director 9.7), the detected API version is $apiVersion.")
         return
     }
@@ -939,7 +954,7 @@ Requires functionality first introduced in vCloud Director v9.7 (API version
     $mySessionID = Get-SessionId($Server)
     if (!$mySessionID) { return }
 
-    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = 'image/png;version=30.0' }
+    $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = "image/png;version=$apiVersion" }
 
     if ($Tenant) {
         $uri = "https://$Server/cloudapi/branding/tenant/$Tenant/icon"

@@ -12,7 +12,7 @@
 RootModule = 'vcd-h5-themes.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.5.2'
+ModuleVersion = '1.6.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -27,10 +27,10 @@ Author = 'Jon Waite'
 CompanyName = 'kiwicloud.ninja'
 
 # Copyright statement for this module
-Copyright = '(c)2018-2019 Jon Waite. All rights reserved.'
+Copyright = '(c)2018-2022 Jon Waite. All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = 'vcd-h5-themes provides cmdlets to assist vCloud Service Providers in managing theme customization for the vCloud Director 9.x HTML5 portal.'
+Description = 'vcd-h5-themes provides cmdlets to assist vCloud Service Providers in managing theme customization for the vCloud Director HTML5 portal.'
 
 # Minimum version of the PowerShell engine required by this module
 # PowerShellVersion = ''
