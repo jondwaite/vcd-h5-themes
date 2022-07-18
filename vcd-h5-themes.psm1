@@ -740,6 +740,11 @@ release.
          Return
     }
 
+    $LogoFileType = (Get-ChildItem -Path $LogoFile | Select-Object -ExpandProperty Extension) -replace "\.",""
+    if($LogoFileType -ieq "svg"){
+        $LogoFileType += "+xml"
+    }
+
     $headers = @{ "x-vcloud-authorization" = $mySessionID; "Accept" = "application/json;version=$apiVersion" }
 
     if ($Tenant) {
@@ -749,7 +754,7 @@ release.
     }
     
     try {
-        Invoke-WebRequest -Uri $uri -Headers $headers -Method Put -InFile $LogoFile -ContentType 'image/png' | Out-Null
+        Invoke-WebRequest -Uri $uri -Headers $headers -Method Put -InFile $LogoFile -ContentType "image/$LogoFileType" | Out-Null
     } catch {
         Write-Error ("Error occurred obtaining uploading logo file, Status Code is $($_.Exception.Response.StatusCode.Value__).")
         return
