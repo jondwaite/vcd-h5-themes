@@ -133,13 +133,10 @@ any prior release.
     if (($Tenant) -and ([Float]$apiVersion -lt 32)) {
         Write-Error("Get-Branding for a specified Tenant requires vCloud API v32 or later (vCloud Director 9.7), the detected API version is $apiVersion.")
         return
-    }
-
-    # For API path change in VCD 10.3+:
-    if ([Float]$apiVersion -lt 36.0) {
-        $uri = "https://$Server/cloudapi/branding"
+    } elseif ($Tenant) {
+        $uri = 'https://' + $Server + '/cloudapi/branding/tenant/' + $Tenant
     } else {
-        $uri = "https://$Server/cloudapi/branding/themes"
+        $uri = 'https://' + $Server + '/cloudapi/branding'
     }
     
     $mySessionID = Get-SessionId($Server)
